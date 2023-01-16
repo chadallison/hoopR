@@ -1,0 +1,101 @@
+---
+title: "hoopR"
+author: "chad allison"
+date: '2023-01-16'
+output: github_document
+---
+
+### setup
+
+```{r message = F, warning = F}
+library(tidyverse)
+library(hoopR)
+theme_set(theme_minimal())
+```
+
+### data import
+
+```{r warning = F}
+# write_csv(load_mbb_pbp(seasons = 2023), "pbp_data.csv")
+df = read_csv("pbp_data.csv", col_types = cols())
+glimpse(df)
+```
+
+### subsetting data
+
+```{r}
+sample_teams = df |>
+  count(home_team_name) |>
+  sample_n(10) |>
+  pull(home_team_name)
+
+# doing this to experiment with smaller data before applying to full data
+sample_df = df |>
+  filter(home_team_name %in% sample_teams)
+```
+
+```{r}
+sample_df |>
+  filter(type_text == "End Game") |>
+  select(home_team_name, away_team_name, home_score, away_score) |>
+  mutate(win_team = ifelse(home_score > away_score, home_team_name, away_team_name))
+```
+
+
+
+desired stats
+- POA: points over opponent allowed (offensive pts over defensive ppg)
+- PUE: points under opponent earned (defensive pts under offensive ppg)
+
+first need offensive and defensive ppg for each team
+
+```{r}
+home_teams = sample_df |>
+  count(home_team_name) |>
+  pull(home_team_name)
+
+away_teams = sample_df |>
+  count(away_team_name) |>
+  pull(away_team_name)
+
+all_teams = unique(c(home_teams, away_teams))
+
+off_def_ppg = data.frame(team = all_teams, off = NA, def = NA)
+
+end_games = sample_df |>
+  filter(text == "End of Game")
+
+end_games |>
+  sample_n(10)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
