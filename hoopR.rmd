@@ -21,53 +21,137 @@ df = read_csv("pbp_data.csv", col_types = cols())
 glimpse(df)
 ```
 
-### subsetting data
+### getting end game data
 
 ```{r}
-sample_teams = df |>
-  count(home_team_name) |>
-  sample_n(10) |>
-  pull(home_team_name)
-
-# doing this to experiment with smaller data before applying to full data
-sample_df = df |>
-  filter(home_team_name %in% sample_teams)
-```
-
-```{r}
-sample_df |>
+end_game = df |>
   filter(type_text == "End Game") |>
   select(home_team_name, away_team_name, home_score, away_score) |>
-  mutate(win_team = ifelse(home_score > away_score, home_team_name, away_team_name))
+  mutate(win_team = ifelse(home_score > away_score, home_team_name, away_team_name),
+         lose_team = ifelse(win_team == home_team_name, away_team_name, home_team_name)) |>
+  rename(home_team = home_team_name, away_team = away_team_name)
+
+sample_n(end_game, 10)
 ```
 
+### getting team records
 
-
-desired stats
-- POA: points over opponent allowed (offensive pts over defensive ppg)
-- PUE: points under opponent earned (defensive pts under offensive ppg)
-
-first need offensive and defensive ppg for each team
+*note that only teams having played ten or more games are included*
 
 ```{r}
-home_teams = sample_df |>
-  count(home_team_name) |>
-  pull(home_team_name)
+all_teams = sort(unique(c(end_game$home_team, end_game$away_team)))
+team_records = data.frame(team = all_teams)
 
-away_teams = sample_df |>
-  count(away_team_name) |>
-  pull(away_team_name)
+team_wins = end_game |>
+  count(win_team) |>
+  rename(team = win_team)
 
-all_teams = unique(c(home_teams, away_teams))
+team_losses = end_game |>
+  count(lose_team) |>
+  rename(team = lose_team)
 
-off_def_ppg = data.frame(team = all_teams, off = NA, def = NA)
+team_records = team_records |>
+  left_join(team_wins, by = "team") |>
+  rename(wins = n) |>
+  left_join(team_losses, by = "team") |>
+  rename(losses = n) |>
+  mutate(wins = ifelse(is.na(wins), 0, wins),
+         losses = ifelse(is.na(losses), 0, losses),
+         games_played = wins + losses,
+         win_prop = round(wins / games_played, 3)) |>
+  filter(games_played >= 10)
 
-end_games = sample_df |>
-  filter(text == "End of Game")
+all_teams = team_records$team
+rm(team_wins, team_losses)
 
-end_games |>
-  sample_n(10)
+team_records |>
+  arrange(desc(win_prop)) |>
+  head(10)
 ```
+
+### getting team offensive points per game stats
+
+```{r}
+team_off_ppg = data.frame(team = all_teams, off_ppg = NA)
+
+for (i in 1:nrow(team_off_ppg)) {
+  
+  home_total = end_game |>
+    filter(home_team == team_off_ppg$team[i]) |>
+    pull(home_score) |>
+    sum()
+  
+  away_total = end_game |>
+    filter(away_team == team_off_ppg$team[i]) |>
+    pull(away_score) |>
+    sum()
+  
+  team_total = home_total + away_total
+  team_gp = team_records$games_played[which(team_records$team == team_off_ppg$team[i])]
+  team_ppg = round(team_total / team_gp, 3)
+  team_off_ppg$off_ppg[i] = team_ppg
+  
+}
+
+team_off_ppg |>
+  arrange(desc(off_ppg)) |>
+  head(10)
+```
+
+### getting team defensive points per game stats
+
+```{r}
+team_def_ppg = data.frame(team = all_teams, def_ppg = NA)
+
+for (i in 1:nrow(team_def_ppg)) {
+  
+  home_total = end_game |>
+    filter(home_team == team_def_ppg$team[i]) |>
+    pull(away_score) |>
+    sum()
+  
+  away_total = end_game |>
+    filter(away_team == team_def_ppg$team[i]) |>
+    pull(home_score) |>
+    sum()
+  
+  team_total = home_total + away_total
+  team_gp = team_records$games_played[which(team_records$team == team_def_ppg$team[i])]
+  team_ppg = round(team_total / team_gp, 3)
+  team_def_ppg$def_ppg[i] = team_ppg
+  
+}
+
+team_def_ppg |>
+  arrange(def_ppg) |>
+  head(10)
+```
+
+### joining offensive and defensive points per game stats
+
+```{r}
+team_ppg = team_off_ppg |>
+  left_join(team_def_ppg, by = "team")
+
+rm(team_off_ppg, team_def_ppg)
+
+team_ppg |>
+  mutate(diff = off_ppg - def_ppg) |>
+  arrange(desc(diff)) |>
+  left_join(team_records, by = "team") |>
+  ggplot(aes(diff, win_prop)) +
+  geom_point(aes(col = win_prop)) +
+  scale_color_gradient(high = "springgreen3", low = "indianred1") +
+  labs(x = "offensive ppg - defensive ppg",
+       y = "win percentage",
+       title = "team win percentage by ppg differential") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+*work in progress, to be continued*
+
+
+
 
 
 
