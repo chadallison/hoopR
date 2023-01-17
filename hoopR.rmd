@@ -183,6 +183,49 @@ end_expanded |>
 
 i do not find it surprising that the values for `ho_str` and `hd_str` appear to be slightly higher than those of `ao_str` and `ad_str` because that would explain the home court advantage. as far as distributions go, the four statistics seem to be very similar aside from their difference in median. `hd_str` appears to have the highest median value, which corresponds to `ao_str` having the lowest median value
 
+### getting team overall strength ratings
+
+```{r}
+get_off_str = function(team) {
+  home = filter(end_expanded, home_team == team)
+  away = filter(end_expanded, away_team == team)
+  home_off_str = sum(home$ho_str)
+  away_off_str = sum(away$ao_str)
+  games_played = team_records$games_played[which(team_records$team == team)]
+  off_str = round((home_off_str + away_off_str) / games_played, 3)
+  return(off_str)
+}
+
+get_def_str = function(team) {
+  home = filter(end_expanded, home_team == team)
+  away = filter(end_expanded, away_team == team)
+  home_def_str = sum(home$hd_str)
+  away_def_str = sum(away$ad_str)
+  games_played = team_records$games_played[which(team_records$team == team)]
+  def_str = round((home_def_str + away_def_str) / games_played, 3)
+  return(def_str)
+}
+
+team_str = data.frame(team = all_teams) |>
+  mutate(off_str = sapply(team, get_off_str),
+         def_str = sapply(team, get_def_str))
+
+team_str |>
+  mutate(category = case_when(off_str > 0 & def_str > 0 ~ "good off, good def",
+                              off_str > 0 & def_str < 0 ~ "good off, bad def",
+                              off_str < 0 & def_str > 0 ~ "bad off, good def",
+                              off_str < 0 & def_str < 0 ~ "bad off, bad def")) |>
+  ggplot(aes(off_str, def_str)) +
+  geom_point(aes(col = category)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_color_manual(values = c("indianred3", "#C696D7", "#93B6DC", "springgreen4")) +
+  labs(x = "offensive strength rating",
+       y = "defensive strength rating",
+       col = NULL, title = "scatterplot of offensive and defensive strength ratings") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom")
+```
 
 
 

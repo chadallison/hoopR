@@ -92,19 +92,19 @@ sample_n(end_game, 10)
 ```
 
     ## # A tibble: 10 x 6
-    ##    home_team              away_team          home_score away_s~1 win_t~2 lose_~3
-    ##    <chr>                  <chr>                   <dbl>    <dbl> <chr>   <chr>  
-    ##  1 Washington State       Utah State                 73       82 Utah S~ Washin~
-    ##  2 Navy                   Lehigh                     73       78 Lehigh  Navy   
-    ##  3 South Florida          Wichita State              66       70 Wichit~ South ~
-    ##  4 American University    Loyola Maryland            71       55 Americ~ Loyola~
-    ##  5 Kansas City            Calvary                   113       54 Kansas~ Calvary
-    ##  6 Utah Tech              Westmont                   80       53 Utah T~ Westmo~
-    ##  7 South Carolina Upstate Winthrop                   70       62 South ~ Winthr~
-    ##  8 Southern Illinois      Alcorn State               74       68 Southe~ Alcorn~
-    ##  9 Hofstra                North Carolina A&T         79       81 North ~ Hofstra
-    ## 10 Boston College         Wyoming                    59       48 Boston~ Wyoming
-    ## # ... with abbreviated variable names 1: away_score, 2: win_team, 3: lose_team
+    ##    home_team      away_team              home_score away_score win_team  lose_~1
+    ##    <chr>          <chr>                       <dbl>      <dbl> <chr>     <chr>  
+    ##  1 UCF            Evansville                     76         56 UCF       Evansv~
+    ##  2 Saint Joseph's Fairleigh Dickinson            80         97 Fairleig~ Saint ~
+    ##  3 St. John's     Merrimack                      97         72 St. John~ Merrim~
+    ##  4 Lindenwood     Tennessee State                57         60 Tennesse~ Linden~
+    ##  5 Clemson        South Carolina Upstate         81         70 Clemson   South ~
+    ##  6 Colorado State San José State                 70         78 San José~ Colora~
+    ##  7 Michigan       Purdue Fort Wayne              75         56 Michigan  Purdue~
+    ##  8 UC Riverside   Portland                       76         65 UC River~ Portla~
+    ##  9 Memphis        Texas A&M                      83         79 Memphis   Texas ~
+    ## 10 Valparaiso     Northern Iowa                  67         69 Northern~ Valpar~
+    ## # ... with abbreviated variable name 1: lose_team
 
 ### getting team records
 
@@ -308,10 +308,56 @@ the four statistics seem to be very similar aside from their difference
 in median. `hd_str` appears to have the highest median value, which
 corresponds to `ao_str` having the lowest median value
 
+### getting team overall strength ratings
+
+``` r
+get_off_str = function(team) {
+  home = filter(end_expanded, home_team == team)
+  away = filter(end_expanded, away_team == team)
+  home_off_str = sum(home$ho_str)
+  away_off_str = sum(away$ao_str)
+  games_played = team_records$games_played[which(team_records$team == team)]
+  off_str = round((home_off_str + away_off_str) / games_played, 3)
+  return(off_str)
+}
+
+get_def_str = function(team) {
+  home = filter(end_expanded, home_team == team)
+  away = filter(end_expanded, away_team == team)
+  home_def_str = sum(home$hd_str)
+  away_def_str = sum(away$ad_str)
+  games_played = team_records$games_played[which(team_records$team == team)]
+  def_str = round((home_def_str + away_def_str) / games_played, 3)
+  return(def_str)
+}
+
+team_str = data.frame(team = all_teams) |>
+  mutate(off_str = sapply(team, get_off_str),
+         def_str = sapply(team, get_def_str))
+
+team_str |>
+  mutate(category = case_when(off_str > 0 & def_str > 0 ~ "good off, good def",
+                              off_str > 0 & def_str < 0 ~ "good off, bad def",
+                              off_str < 0 & def_str > 0 ~ "bad off, good def",
+                              off_str < 0 & def_str < 0 ~ "bad off, bad def")) |>
+  ggplot(aes(off_str, def_str)) +
+  geom_point(aes(col = category)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  scale_color_manual(values = c("indianred3", "#C696D7", "#93B6DC", "springgreen4")) +
+  labs(x = "offensive strength rating",
+       y = "defensive strength rating",
+       col = NULL, title = "scatterplot of offensive and defensive strength ratings") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom")
+```
+
+![](hoopR_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
 ### script runtime
 
 ``` r
 tictoc::toc()
 ```
 
-    ## 14.2 sec elapsed
+    ## 20.04 sec elapsed
