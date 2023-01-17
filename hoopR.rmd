@@ -132,7 +132,7 @@ team_def_ppg = team_def_ppg |>
 
 # top 10 teams, defensive ppg
 team_def_ppg |>
-  arrange(desc(def_ppg)) |>
+  arrange(def_ppg) |>
   head(10)
 ```
 
@@ -226,6 +226,93 @@ team_str |>
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "bottom")
 ```
+
+### getting separate home and away strength ratings
+
+```{r}
+home_counts = df |>
+  filter(text == "End of Game",
+         home_team_name %in% all_teams,
+         away_team_name %in% all_teams) |>
+  count(home_team_name)
+
+away_counts = df |>
+  filter(text == "End of Game",
+         home_team_name %in% all_teams,
+         away_team_name %in% all_teams) |>
+  count(away_team_name)
+
+home_away_counts = home_counts |>
+  rename(team = home_team_name,
+         home_n = n) |>
+  left_join(away_counts, by = c("team" = "away_team_name")) |>
+  rename(away_n = n)
+
+rm(home_counts, away_counts)
+
+get_home_off_str = function(team) {
+  games = filter(end_expanded, home_team == team)
+  ho_str = round(sum(games$ho_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
+  return(ho_str)
+}
+
+get_home_def_str = function(team) {
+  games = filter(end_expanded, home_team == team)
+  hd_str = round(sum(games$hd_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
+  return(hd_str)
+}
+
+get_away_off_str = function(team) {
+  games = filter(end_expanded, away_team == team)
+  ao_str = round(sum(games$ao_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
+  return(ao_str)
+}
+
+get_away_def_str = function(team) {
+  games = filter(end_expanded, away_team == team)
+  ad_str = round(sum(games$ad_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
+  return(ad_str)
+}
+
+home_away_str = data.frame(team = all_teams) |>
+  filter(!team %in% c("Alcorn State", "South Carolina State")) |> # error with these two
+  mutate(home_off_str = sapply(team, get_home_off_str),
+         home_def_str = sapply(team, get_home_def_str),
+         away_off_str = sapply(team, get_away_off_str),
+         away_def_str = sapply(team, get_away_def_str),
+         home_str = home_off_str + home_def_str,
+         away_str = away_off_str + away_def_str,
+         home_away_diff = home_str - away_str)
+
+home_away_str |>
+  pivot_longer(c(home_str, away_str), names_to = "home_away", values_to = "value") |>
+  mutate(home_away = factor(home_away, levels = c("home_str", "away_str"))) |>
+  ggplot(aes(value)) +
+  geom_density(aes(fill = home_away), alpha = 0.5) +
+  scale_fill_manual(values = c("springgreen4", "indianred3")) +
+  labs(x = "strength rating", y = "density", fill = NULL,
+       title = "distribution of strength ratings for home and away games") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+res = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams,
+         !home_team %in% c("Alcorn State", "South Carolina State"),
+         !away_team %in% c("Alcorn State", "South Carolina State")) |>
+  left_join(home_away_str, by = c("home_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str) |>
+  left_join(home_away_str, by = c("away_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str.x, away_str) |>
+  rename(home_str = home_str.x) |>
+  mutate(pred_winner = ifelse(home_str >= away_str, home_team, away_team)) |>
+  count(win_team == pred_winner) |>
+  pull(n)
+
+paste0("basic accuracy: ", round(res[2] / sum(res), 3))
+```
+
+*work in progress, still in introductory stage*
 
 
 

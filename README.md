@@ -92,19 +92,19 @@ sample_n(end_game, 10)
 ```
 
     ## # A tibble: 10 x 6
-    ##    home_team      away_team              home_score away_score win_team  lose_~1
-    ##    <chr>          <chr>                       <dbl>      <dbl> <chr>     <chr>  
-    ##  1 UCF            Evansville                     76         56 UCF       Evansv~
-    ##  2 Saint Joseph's Fairleigh Dickinson            80         97 Fairleig~ Saint ~
-    ##  3 St. John's     Merrimack                      97         72 St. John~ Merrim~
-    ##  4 Lindenwood     Tennessee State                57         60 Tennesse~ Linden~
-    ##  5 Clemson        South Carolina Upstate         81         70 Clemson   South ~
-    ##  6 Colorado State San José State                 70         78 San José~ Colora~
-    ##  7 Michigan       Purdue Fort Wayne              75         56 Michigan  Purdue~
-    ##  8 UC Riverside   Portland                       76         65 UC River~ Portla~
-    ##  9 Memphis        Texas A&M                      83         79 Memphis   Texas ~
-    ## 10 Valparaiso     Northern Iowa                  67         69 Northern~ Valpar~
-    ## # ... with abbreviated variable name 1: lose_team
+    ##    home_team            away_team             home_score away_~1 win_t~2 lose_~3
+    ##    <chr>                <chr>                      <dbl>   <dbl> <chr>   <chr>  
+    ##  1 Mississippi State    Nicholls                      68      66 Missis~ Nichol~
+    ##  2 Southern Miss        Troy                          64      60 Southe~ Troy   
+    ##  3 Cal State Northridge UC Irvine                     57      71 UC Irv~ Cal St~
+    ##  4 Old Dominion         Furman                        82      77 Old Do~ Furman 
+    ##  5 Louisville           Wright State                  72      73 Wright~ Louisv~
+    ##  6 Albany               UMass Lowell                  89      63 Albany  UMass ~
+    ##  7 Tennessee Tech       Tennessee Wesleyan            82      48 Tennes~ Tennes~
+    ##  8 UC Riverside         Cal State Bakersfield         71      59 UC Riv~ Cal St~
+    ##  9 Mississippi State    Utah                          52      49 Missis~ Utah   
+    ## 10 UCLA                 Colorado                      68      54 UCLA    Colora~
+    ## # ... with abbreviated variable names 1: away_score, 2: win_team, 3: lose_team
 
 ### getting team records
 
@@ -227,21 +227,21 @@ team_def_ppg = team_def_ppg |>
 
 # top 10 teams, defensive ppg
 team_def_ppg |>
-  arrange(desc(def_ppg)) |>
+  arrange(def_ppg) |>
   head(10)
 ```
 
-    ##                      team def_ppg
-    ## 1    South Carolina State  88.929
-    ## 2  Long Island University  85.538
-    ## 3            Coppin State  85.211
-    ## 4       Houston Christian  82.588
-    ## 5             New Orleans  82.231
-    ## 6        Central Arkansas  81.824
-    ## 7                 Hampton  81.231
-    ## 8                  Toledo  80.000
-    ## 9        Eastern Michigan  79.538
-    ## 10   UT Rio Grande Valley  79.389
+    ##                 team def_ppg
+    ## 1            Houston  52.889
+    ## 2          Tennessee  53.250
+    ## 3        North Texas  54.294
+    ## 4            Rutgers  56.944
+    ## 5  Mississippi State  57.471
+    ## 6       Saint Mary's  57.632
+    ## 7         Iowa State  57.938
+    ## 8        Sam Houston  58.500
+    ## 9             Dayton  58.750
+    ## 10           Liberty  59.000
 
 ### joining offensive and defensive points per game stats
 
@@ -354,10 +354,101 @@ team_str |>
 
 ![](hoopR_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
+### getting separate home and away strength ratings
+
+``` r
+home_counts = df |>
+  filter(text == "End of Game",
+         home_team_name %in% all_teams,
+         away_team_name %in% all_teams) |>
+  count(home_team_name)
+
+away_counts = df |>
+  filter(text == "End of Game",
+         home_team_name %in% all_teams,
+         away_team_name %in% all_teams) |>
+  count(away_team_name)
+
+home_away_counts = home_counts |>
+  rename(team = home_team_name,
+         home_n = n) |>
+  left_join(away_counts, by = c("team" = "away_team_name")) |>
+  rename(away_n = n)
+
+rm(home_counts, away_counts)
+
+get_home_off_str = function(team) {
+  games = filter(end_expanded, home_team == team)
+  ho_str = round(sum(games$ho_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
+  return(ho_str)
+}
+
+get_home_def_str = function(team) {
+  games = filter(end_expanded, home_team == team)
+  hd_str = round(sum(games$hd_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
+  return(hd_str)
+}
+
+get_away_off_str = function(team) {
+  games = filter(end_expanded, away_team == team)
+  ao_str = round(sum(games$ao_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
+  return(ao_str)
+}
+
+get_away_def_str = function(team) {
+  games = filter(end_expanded, away_team == team)
+  ad_str = round(sum(games$ad_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
+  return(ad_str)
+}
+
+home_away_str = data.frame(team = all_teams) |>
+  filter(!team %in% c("Alcorn State", "South Carolina State")) |> # error with these two
+  mutate(home_off_str = sapply(team, get_home_off_str),
+         home_def_str = sapply(team, get_home_def_str),
+         away_off_str = sapply(team, get_away_off_str),
+         away_def_str = sapply(team, get_away_def_str),
+         home_str = home_off_str + home_def_str,
+         away_str = away_off_str + away_def_str,
+         home_away_diff = home_str - away_str)
+
+home_away_str |>
+  pivot_longer(c(home_str, away_str), names_to = "home_away", values_to = "value") |>
+  mutate(home_away = factor(home_away, levels = c("home_str", "away_str"))) |>
+  ggplot(aes(value)) +
+  geom_density(aes(fill = home_away), alpha = 0.5) +
+  scale_fill_manual(values = c("springgreen4", "indianred3")) +
+  labs(x = "strength rating", y = "density", fill = NULL,
+       title = "distribution of strength ratings for home and away games") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+![](hoopR_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+res = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams,
+         !home_team %in% c("Alcorn State", "South Carolina State"),
+         !away_team %in% c("Alcorn State", "South Carolina State")) |>
+  left_join(home_away_str, by = c("home_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str) |>
+  left_join(home_away_str, by = c("away_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str.x, away_str) |>
+  rename(home_str = home_str.x) |>
+  mutate(pred_winner = ifelse(home_str >= away_str, home_team, away_team)) |>
+  count(win_team == pred_winner) |>
+  pull(n)
+
+paste0("basic accuracy: ", round(res[2] / sum(res), 3))
+```
+
+    ## [1] "basic accuracy: 0.767"
+
+*work in progress, still in introductory stage*
+
 ### script runtime
 
 ``` r
 tictoc::toc()
 ```
 
-    ## 20.04 sec elapsed
+    ## 27.03 sec elapsed
