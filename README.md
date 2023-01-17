@@ -6,6 +6,7 @@ chad allison
 ### setup
 
 ``` r
+tictoc::tic() # start script runtime tracker
 library(tidyverse)
 library(hoopR)
 theme_set(theme_minimal())
@@ -21,61 +22,61 @@ glimpse(df)
 
     ## Rows: 1,111,934
     ## Columns: 55
-    ## $ id                              <dbl> 4.014829e+17, 4.014829e+17, 4.014829e+…
-    ## $ sequence_number                 <dbl> 101806601, 101806602, 101806603, 10180…
-    ## $ type_id                         <dbl> 519, 540, 540, 558, 587, 572, 519, 598…
-    ## $ type_text                       <chr> "PersonalFoul", "MadeFreeThrow", "Made…
-    ## $ text                            <chr> "Foul on Caleb Love.", "Shykeim Philli…
-    ## $ away_score                      <dbl> 0, 1, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4,…
-    ## $ home_score                      <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2,…
-    ## $ period_number                   <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ period_display_value            <chr> "1st Half", "1st Half", "1st Half", "1…
-    ## $ clock_display_value             <time> 19:33:00, 19:33:00, 19:33:00, 19:14:0…
-    ## $ scoring_play                    <lgl> FALSE, TRUE, TRUE, FALSE, FALSE, TRUE,…
-    ## $ score_value                     <dbl> 0, 1, 1, 2, 0, 2, 0, 0, 2, 0, 0, 1, 1,…
-    ## $ team_id                         <dbl> 153, 350, 350, 153, 350, 350, 153, 153…
-    ## $ participants_0_athlete_id       <dbl> 4433144, 4592975, 4592975, 4395650, 45…
-    ## $ wallclock                       <dttm> 2022-11-08 02:07:19, 2022-11-08 02:07…
-    ## $ shooting_play                   <lgl> FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, …
-    ## $ participants_1_athlete_id       <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…
-    ## $ season                          <dbl> 2023, 2023, 2023, 2023, 2023, 2023, 20…
-    ## $ season_type                     <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,…
-    ## $ away_team_id                    <dbl> 350, 350, 350, 350, 350, 350, 350, 350…
-    ## $ away_team_name                  <chr> "UNC Wilmington", "UNC Wilmington", "U…
-    ## $ away_team_mascot                <chr> "Seahawks", "Seahawks", "Seahawks", "S…
-    ## $ away_team_abbrev                <chr> "UNCW", "UNCW", "UNCW", "UNCW", "UNCW"…
-    ## $ away_team_name_alt              <chr> "UNC Wilmington", "UNC Wilmington", "U…
-    ## $ home_team_id                    <dbl> 153, 153, 153, 153, 153, 153, 153, 153…
-    ## $ home_team_name                  <chr> "North Carolina", "North Carolina", "N…
-    ## $ home_team_mascot                <chr> "Tar Heels", "Tar Heels", "Tar Heels",…
-    ## $ home_team_abbrev                <chr> "UNC", "UNC", "UNC", "UNC", "UNC", "UN…
-    ## $ home_team_name_alt              <chr> "North Carolina", "North Carolina", "N…
-    ## $ home_team_spread                <dbl> 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23…
-    ## $ game_spread                     <dbl> -23.5, -23.5, -23.5, -23.5, -23.5, -23…
-    ## $ home_favorite                   <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TR…
-    ## $ game_spread_available           <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TR…
-    ## $ game_id                         <dbl> 401482947, 401482947, 401482947, 40148…
-    ## $ qtr                             <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ time                            <time> 19:33:00, 19:33:00, 19:33:00, 19:14:0…
-    ## $ clock_minutes                   <dbl> 19, 19, 19, 19, 19, 18, 18, 18, 18, 18…
-    ## $ clock_seconds                   <chr> "33", "33", "33", "14", "11", "51", "3…
-    ## $ half                            <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ game_half                       <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ lag_qtr                         <dbl> NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-    ## $ lead_qtr                        <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ lag_game_half                   <dbl> NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
-    ## $ lead_game_half                  <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ start_quarter_seconds_remaining <dbl> 1173, 1173, 1173, 1154, 1151, 1131, 11…
-    ## $ start_half_seconds_remaining    <dbl> 1773, 1773, 1773, 1754, 1751, 1731, 17…
-    ## $ start_game_seconds_remaining    <dbl> 2973, 2973, 2973, 2954, 2951, 2931, 29…
-    ## $ game_play_number                <dbl> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,…
-    ## $ end_quarter_seconds_remaining   <dbl> 600, 1173, 1173, 1173, 1154, 1151, 113…
-    ## $ end_half_seconds_remaining      <dbl> 1200, 1773, 1773, 1773, 1754, 1751, 17…
-    ## $ end_game_seconds_remaining      <dbl> 2400, 2973, 2973, 2973, 2954, 2951, 29…
-    ## $ period                          <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
-    ## $ coordinate_x                    <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…
-    ## $ coordinate_y                    <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…
-    ## $ media_id                        <lgl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…
+    ## $ id                              <dbl> 4.014829e+17, 4.014829e+17, 4.014829e+~
+    ## $ sequence_number                 <dbl> 101806601, 101806602, 101806603, 10180~
+    ## $ type_id                         <dbl> 519, 540, 540, 558, 587, 572, 519, 598~
+    ## $ type_text                       <chr> "PersonalFoul", "MadeFreeThrow", "Made~
+    ## $ text                            <chr> "Foul on Caleb Love.", "Shykeim Philli~
+    ## $ away_score                      <dbl> 0, 1, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4,~
+    ## $ home_score                      <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2,~
+    ## $ period_number                   <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ period_display_value            <chr> "1st Half", "1st Half", "1st Half", "1~
+    ## $ clock_display_value             <time> 19:33:00, 19:33:00, 19:33:00, 19:14:0~
+    ## $ scoring_play                    <lgl> FALSE, TRUE, TRUE, FALSE, FALSE, TRUE,~
+    ## $ score_value                     <dbl> 0, 1, 1, 2, 0, 2, 0, 0, 2, 0, 0, 1, 1,~
+    ## $ team_id                         <dbl> 153, 350, 350, 153, 350, 350, 153, 153~
+    ## $ participants_0_athlete_id       <dbl> 4433144, 4592975, 4592975, 4395650, 45~
+    ## $ wallclock                       <dttm> 2022-11-08 02:07:19, 2022-11-08 02:07~
+    ## $ shooting_play                   <lgl> FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, ~
+    ## $ participants_1_athlete_id       <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA~
+    ## $ season                          <dbl> 2023, 2023, 2023, 2023, 2023, 2023, 20~
+    ## $ season_type                     <dbl> 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,~
+    ## $ away_team_id                    <dbl> 350, 350, 350, 350, 350, 350, 350, 350~
+    ## $ away_team_name                  <chr> "UNC Wilmington", "UNC Wilmington", "U~
+    ## $ away_team_mascot                <chr> "Seahawks", "Seahawks", "Seahawks", "S~
+    ## $ away_team_abbrev                <chr> "UNCW", "UNCW", "UNCW", "UNCW", "UNCW"~
+    ## $ away_team_name_alt              <chr> "UNC Wilmington", "UNC Wilmington", "U~
+    ## $ home_team_id                    <dbl> 153, 153, 153, 153, 153, 153, 153, 153~
+    ## $ home_team_name                  <chr> "North Carolina", "North Carolina", "N~
+    ## $ home_team_mascot                <chr> "Tar Heels", "Tar Heels", "Tar Heels",~
+    ## $ home_team_abbrev                <chr> "UNC", "UNC", "UNC", "UNC", "UNC", "UN~
+    ## $ home_team_name_alt              <chr> "North Carolina", "North Carolina", "N~
+    ## $ home_team_spread                <dbl> 23.5, 23.5, 23.5, 23.5, 23.5, 23.5, 23~
+    ## $ game_spread                     <dbl> -23.5, -23.5, -23.5, -23.5, -23.5, -23~
+    ## $ home_favorite                   <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TR~
+    ## $ game_spread_available           <lgl> TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TR~
+    ## $ game_id                         <dbl> 401482947, 401482947, 401482947, 40148~
+    ## $ qtr                             <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ time                            <time> 19:33:00, 19:33:00, 19:33:00, 19:14:0~
+    ## $ clock_minutes                   <dbl> 19, 19, 19, 19, 19, 18, 18, 18, 18, 18~
+    ## $ clock_seconds                   <chr> "33", "33", "33", "14", "11", "51", "3~
+    ## $ half                            <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ game_half                       <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ lag_qtr                         <dbl> NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1~
+    ## $ lead_qtr                        <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ lag_game_half                   <dbl> NA, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1~
+    ## $ lead_game_half                  <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ start_quarter_seconds_remaining <dbl> 1173, 1173, 1173, 1154, 1151, 1131, 11~
+    ## $ start_half_seconds_remaining    <dbl> 1773, 1773, 1773, 1754, 1751, 1731, 17~
+    ## $ start_game_seconds_remaining    <dbl> 2973, 2973, 2973, 2954, 2951, 2931, 29~
+    ## $ game_play_number                <dbl> 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,~
+    ## $ end_quarter_seconds_remaining   <dbl> 600, 1173, 1173, 1173, 1154, 1151, 113~
+    ## $ end_half_seconds_remaining      <dbl> 1200, 1773, 1773, 1773, 1754, 1751, 17~
+    ## $ end_game_seconds_remaining      <dbl> 2400, 2973, 2973, 2973, 2954, 2951, 29~
+    ## $ period                          <dbl> 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,~
+    ## $ coordinate_x                    <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA~
+    ## $ coordinate_y                    <dbl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA~
+    ## $ media_id                        <lgl> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA~
 
 ### getting end game data
 
@@ -90,20 +91,20 @@ end_game = df |>
 sample_n(end_game, 10)
 ```
 
-    ## # A tibble: 10 × 6
-    ##    home_team           away_team            home_score away_sc…¹ win_t…² lose_…³
-    ##    <chr>               <chr>                     <dbl>     <dbl> <chr>   <chr>  
-    ##  1 Iona                St. Bonaventure              72        57 Iona    St. Bo…
-    ##  2 UC Davis            Arkansas State               75        60 UC Dav… Arkans…
-    ##  3 Tennessee Tech      Kentucky Christian          104        72 Tennes… Kentuc…
-    ##  4 Lindenwood          Lamar                        71        73 Lamar   Linden…
-    ##  5 UNC Asheville       Western Carolina             73        61 UNC As… Wester…
-    ##  6 Eastern Illinois    Southern Indiana             91        80 Easter… Southe…
-    ##  7 Mercer              Middle Georgia State        100        62 Mercer  Middle…
-    ##  8 Houston             North Florida                76        42 Houston North …
-    ##  9 Ole Miss            Alcorn State                 73        58 Ole Mi… Alcorn…
-    ## 10 Charleston Southern Longwood                     74        79 Longwo… Charle…
-    ## # … with abbreviated variable names ¹​away_score, ²​win_team, ³​lose_team
+    ## # A tibble: 10 x 6
+    ##    home_team              away_team          home_score away_s~1 win_t~2 lose_~3
+    ##    <chr>                  <chr>                   <dbl>    <dbl> <chr>   <chr>  
+    ##  1 Washington State       Utah State                 73       82 Utah S~ Washin~
+    ##  2 Navy                   Lehigh                     73       78 Lehigh  Navy   
+    ##  3 South Florida          Wichita State              66       70 Wichit~ South ~
+    ##  4 American University    Loyola Maryland            71       55 Americ~ Loyola~
+    ##  5 Kansas City            Calvary                   113       54 Kansas~ Calvary
+    ##  6 Utah Tech              Westmont                   80       53 Utah T~ Westmo~
+    ##  7 South Carolina Upstate Winthrop                   70       62 South ~ Winthr~
+    ##  8 Southern Illinois      Alcorn State               74       68 Southe~ Alcorn~
+    ##  9 Hofstra                North Carolina A&T         79       81 North ~ Hofstra
+    ## 10 Boston College         Wyoming                    59       48 Boston~ Wyoming
+    ## # ... with abbreviated variable names 1: away_score, 2: win_team, 3: lose_team
 
 ### getting team records
 
@@ -157,25 +158,29 @@ team_records |>
 ``` r
 team_off_ppg = data.frame(team = all_teams, off_ppg = NA)
 
-for (i in 1:nrow(team_off_ppg)) {
+get_off_ppg = function(team) {
   
   home_total = end_game |>
-    filter(home_team == team_off_ppg$team[i]) |>
+    filter(home_team == team) |>
     pull(home_score) |>
     sum()
   
   away_total = end_game |>
-    filter(away_team == team_off_ppg$team[i]) |>
+    filter(away_team == team) |>
     pull(away_score) |>
     sum()
   
   team_total = home_total + away_total
-  team_gp = team_records$games_played[which(team_records$team == team_off_ppg$team[i])]
+  team_gp = team_records$games_played[which(team_records$team == team)]
   team_ppg = round(team_total / team_gp, 3)
-  team_off_ppg$off_ppg[i] = team_ppg
+  return(team_ppg)
   
 }
 
+team_off_ppg = team_off_ppg |>
+  mutate(off_ppg = sapply(team, get_off_ppg))
+
+# top 10 teams, offensive ppg
 team_off_ppg |>
   arrange(desc(off_ppg)) |>
   head(10)
@@ -198,49 +203,51 @@ team_off_ppg |>
 ``` r
 team_def_ppg = data.frame(team = all_teams, def_ppg = NA)
 
-for (i in 1:nrow(team_def_ppg)) {
+get_def_ppg = function(team) {
   
   home_total = end_game |>
-    filter(home_team == team_def_ppg$team[i]) |>
+    filter(home_team == team) |>
     pull(away_score) |>
     sum()
   
   away_total = end_game |>
-    filter(away_team == team_def_ppg$team[i]) |>
+    filter(away_team == team) |>
     pull(home_score) |>
     sum()
   
   team_total = home_total + away_total
-  team_gp = team_records$games_played[which(team_records$team == team_def_ppg$team[i])]
+  team_gp = team_records$games_played[which(team_records$team == team)]
   team_ppg = round(team_total / team_gp, 3)
-  team_def_ppg$def_ppg[i] = team_ppg
+  return(team_ppg)
   
 }
 
+team_def_ppg = team_def_ppg |>
+  mutate(def_ppg = sapply(team, get_def_ppg))
+
+# top 10 teams, defensive ppg
 team_def_ppg |>
-  arrange(def_ppg) |>
+  arrange(desc(def_ppg)) |>
   head(10)
 ```
 
-    ##                 team def_ppg
-    ## 1            Houston  52.889
-    ## 2          Tennessee  53.250
-    ## 3        North Texas  54.294
-    ## 4            Rutgers  56.944
-    ## 5  Mississippi State  57.471
-    ## 6       Saint Mary's  57.632
-    ## 7         Iowa State  57.938
-    ## 8        Sam Houston  58.500
-    ## 9             Dayton  58.750
-    ## 10           Liberty  59.000
+    ##                      team def_ppg
+    ## 1    South Carolina State  88.929
+    ## 2  Long Island University  85.538
+    ## 3            Coppin State  85.211
+    ## 4       Houston Christian  82.588
+    ## 5             New Orleans  82.231
+    ## 6        Central Arkansas  81.824
+    ## 7                 Hampton  81.231
+    ## 8                  Toledo  80.000
+    ## 9        Eastern Michigan  79.538
+    ## 10   UT Rio Grande Valley  79.389
 
 ### joining offensive and defensive points per game stats
 
 ``` r
 team_ppg = team_off_ppg |>
   left_join(team_def_ppg, by = "team")
-
-rm(team_off_ppg, team_def_ppg)
 
 team_ppg |>
   mutate(diff = off_ppg - def_ppg) |>
@@ -252,9 +259,59 @@ team_ppg |>
   labs(x = "offensive ppg - defensive ppg",
        y = "win percentage",
        title = "team win percentage by ppg differential") +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none")
 ```
 
 ![](hoopR_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-*work in progress, to be continued*
+### adding ppg stats to end game data and creating strength ratings
+
+``` r
+end_expanded = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
+  left_join(team_ppg, by = c("home_team" = "team")) |>
+  rename(home_off_ppg = off_ppg, home_def_ppg = def_ppg) |>
+  left_join(team_ppg, by = c("away_team" = "team")) |>
+  rename(away_off_ppg = off_ppg, away_def_ppg = def_ppg) |>
+  mutate(ho_str = home_score - away_def_ppg,
+         hd_str = away_off_ppg - away_score,
+         ao_str = away_score - home_def_ppg,
+         ad_str = home_off_ppg - home_score)
+
+end_expanded |>
+  pivot_longer(c(ho_str, hd_str, ao_str, ad_str), names_to = "stat", values_to = "value") |>
+  mutate(stat = factor(stat, levels = c("ho_str", "hd_str", "ao_str", "ad_str"))) |>
+  ggplot(aes(stat, value)) +
+  geom_boxplot(aes(fill = stat), alpha = 0.75) +
+  labs(fill = NULL, title = "boxplots of off/def strength ratings for all matchups") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+![](hoopR_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+**how to interpret this plot**: i have created these “strength” ratings
+which are intended to quantify how a team is performing relative to the
+opposing team’s average performance. for example, `ho_str` is the
+difference between points scored by the home team and the opposing
+team’s average points allowed per game. a positive value would indicate
+that the home team performed well offensively, and a negative value
+would indicate that the opposing team performed well defensively. of
+course, it isn’t always as simple as positive value =\> offense good &
+negative value =\> defense good, but that is a simple way to interpret
+the stat.
+
+i do not find it surprising that the values for `ho_str` and `hd_str`
+appear to be slightly higher than those of `ao_str` and `ad_str` because
+that would explain the home court advantage. as far as distributions go,
+the four statistics seem to be very similar aside from their difference
+in median. `hd_str` appears to have the highest median value, which
+corresponds to `ao_str` having the lowest median value
+
+### script runtime
+
+``` r
+tictoc::toc()
+```
+
+    ## 14.2 sec elapsed

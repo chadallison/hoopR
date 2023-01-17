@@ -8,6 +8,7 @@ output: github_document
 ### setup
 
 ```{r message = F, warning = F}
+tictoc::tic() # start script runtime tracker
 library(tidyverse)
 library(hoopR)
 theme_set(theme_minimal())
@@ -74,25 +75,29 @@ team_records |>
 ```{r}
 team_off_ppg = data.frame(team = all_teams, off_ppg = NA)
 
-for (i in 1:nrow(team_off_ppg)) {
+get_off_ppg = function(team) {
   
   home_total = end_game |>
-    filter(home_team == team_off_ppg$team[i]) |>
+    filter(home_team == team) |>
     pull(home_score) |>
     sum()
   
   away_total = end_game |>
-    filter(away_team == team_off_ppg$team[i]) |>
+    filter(away_team == team) |>
     pull(away_score) |>
     sum()
   
   team_total = home_total + away_total
-  team_gp = team_records$games_played[which(team_records$team == team_off_ppg$team[i])]
+  team_gp = team_records$games_played[which(team_records$team == team)]
   team_ppg = round(team_total / team_gp, 3)
-  team_off_ppg$off_ppg[i] = team_ppg
+  return(team_ppg)
   
 }
 
+team_off_ppg = team_off_ppg |>
+  mutate(off_ppg = sapply(team, get_off_ppg))
+
+# top 10 teams, offensive ppg
 team_off_ppg |>
   arrange(desc(off_ppg)) |>
   head(10)
@@ -103,27 +108,31 @@ team_off_ppg |>
 ```{r}
 team_def_ppg = data.frame(team = all_teams, def_ppg = NA)
 
-for (i in 1:nrow(team_def_ppg)) {
+get_def_ppg = function(team) {
   
   home_total = end_game |>
-    filter(home_team == team_def_ppg$team[i]) |>
+    filter(home_team == team) |>
     pull(away_score) |>
     sum()
   
   away_total = end_game |>
-    filter(away_team == team_def_ppg$team[i]) |>
+    filter(away_team == team) |>
     pull(home_score) |>
     sum()
   
   team_total = home_total + away_total
-  team_gp = team_records$games_played[which(team_records$team == team_def_ppg$team[i])]
+  team_gp = team_records$games_played[which(team_records$team == team)]
   team_ppg = round(team_total / team_gp, 3)
-  team_def_ppg$def_ppg[i] = team_ppg
+  return(team_ppg)
   
 }
 
+team_def_ppg = team_def_ppg |>
+  mutate(def_ppg = sapply(team, get_def_ppg))
+
+# top 10 teams, defensive ppg
 team_def_ppg |>
-  arrange(def_ppg) |>
+  arrange(desc(def_ppg)) |>
   head(10)
 ```
 
@@ -132,8 +141,6 @@ team_def_ppg |>
 ```{r}
 team_ppg = team_off_ppg |>
   left_join(team_def_ppg, by = "team")
-
-rm(team_off_ppg, team_def_ppg)
 
 team_ppg |>
   mutate(diff = off_ppg - def_ppg) |>
@@ -145,11 +152,63 @@ team_ppg |>
   labs(x = "offensive ppg - defensive ppg",
        y = "win percentage",
        title = "team win percentage by ppg differential") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none")
+```
+
+### adding ppg stats to end game data and creating strength ratings
+
+```{r}
+end_expanded = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
+  left_join(team_ppg, by = c("home_team" = "team")) |>
+  rename(home_off_ppg = off_ppg, home_def_ppg = def_ppg) |>
+  left_join(team_ppg, by = c("away_team" = "team")) |>
+  rename(away_off_ppg = off_ppg, away_def_ppg = def_ppg) |>
+  mutate(ho_str = home_score - away_def_ppg,
+         hd_str = away_off_ppg - away_score,
+         ao_str = away_score - home_def_ppg,
+         ad_str = home_off_ppg - home_score)
+
+end_expanded |>
+  pivot_longer(c(ho_str, hd_str, ao_str, ad_str), names_to = "stat", values_to = "value") |>
+  mutate(stat = factor(stat, levels = c("ho_str", "hd_str", "ao_str", "ad_str"))) |>
+  ggplot(aes(stat, value)) +
+  geom_boxplot(aes(fill = stat), alpha = 0.75) +
+  labs(fill = NULL, title = "boxplots of off/def strength ratings for all matchups") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-*work in progress, to be continued*
+**how to interpret this plot**: i have created these "strength" ratings which are intended to quantify how a team is performing relative to the opposing team's average performance. for example, `ho_str` is the difference between points scored by the home team and the opposing team's average points allowed per game. a positive value would indicate that the home team performed well offensively, and a negative value would indicate that the opposing team performed well defensively. of course, it isn't always as simple as positive value => offense good & negative value => defense good, but that is a simple way to interpret the stat.
 
+i do not find it surprising that the values for `ho_str` and `hd_str` appear to be slightly higher than those of `ao_str` and `ad_str` because that would explain the home court advantage. as far as distributions go, the four statistics seem to be very similar aside from their difference in median. `hd_str` appears to have the highest median value, which corresponds to `ao_str` having the lowest median value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### script runtime
+
+```{r}
+tictoc::toc()
+```
 
 
 
