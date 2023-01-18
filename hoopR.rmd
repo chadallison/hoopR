@@ -63,6 +63,7 @@ team_records = team_records |>
   filter(games_played >= 10)
 
 all_teams = team_records$team
+all_teams = all_teams[!all_teams %in% c("Alcorn State", "South Carolina State")]
 rm(team_wins, team_losses)
 
 team_records |>
@@ -252,30 +253,33 @@ rm(home_counts, away_counts)
 
 get_home_off_str = function(team) {
   games = filter(end_expanded, home_team == team)
+  if (nrow(games) == 0) return(0)
   ho_str = round(sum(games$ho_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
   return(ho_str)
 }
 
 get_home_def_str = function(team) {
   games = filter(end_expanded, home_team == team)
+  if (nrow(games) == 0) return(0)
   hd_str = round(sum(games$hd_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
   return(hd_str)
 }
 
 get_away_off_str = function(team) {
   games = filter(end_expanded, away_team == team)
+  if (nrow(games) == 0) return(0)
   ao_str = round(sum(games$ao_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
   return(ao_str)
 }
 
 get_away_def_str = function(team) {
   games = filter(end_expanded, away_team == team)
+  if (nrow(games) == 0) return(0)
   ad_str = round(sum(games$ad_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
   return(ad_str)
 }
 
 home_away_str = data.frame(team = all_teams) |>
-  filter(!team %in% c("Alcorn State", "South Carolina State")) |> # error with these two
   mutate(home_off_str = sapply(team, get_home_off_str),
          home_def_str = sapply(team, get_home_def_str),
          away_off_str = sapply(team, get_away_off_str),
@@ -295,11 +299,11 @@ home_away_str |>
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
+### evaluating accuracy of game predictions based entirely on home and away strength ratings
+
 ```{r}
 res = end_game |>
-  filter(home_team %in% all_teams & away_team %in% all_teams,
-         !home_team %in% c("Alcorn State", "South Carolina State"),
-         !away_team %in% c("Alcorn State", "South Carolina State")) |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
   left_join(home_away_str, by = c("home_team" = "team")) |>
   select(home_team, away_team, win_team, home_str) |>
   left_join(home_away_str, by = c("away_team" = "team")) |>
@@ -313,21 +317,6 @@ paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 ```
 
 *work in progress, still in introductory stage*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

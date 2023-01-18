@@ -92,19 +92,19 @@ sample_n(end_game, 10)
 ```
 
     ## # A tibble: 10 x 6
-    ##    home_team            away_team             home_score away_~1 win_t~2 lose_~3
-    ##    <chr>                <chr>                      <dbl>   <dbl> <chr>   <chr>  
-    ##  1 Mississippi State    Nicholls                      68      66 Missis~ Nichol~
-    ##  2 Southern Miss        Troy                          64      60 Southe~ Troy   
-    ##  3 Cal State Northridge UC Irvine                     57      71 UC Irv~ Cal St~
-    ##  4 Old Dominion         Furman                        82      77 Old Do~ Furman 
-    ##  5 Louisville           Wright State                  72      73 Wright~ Louisv~
-    ##  6 Albany               UMass Lowell                  89      63 Albany  UMass ~
-    ##  7 Tennessee Tech       Tennessee Wesleyan            82      48 Tennes~ Tennes~
-    ##  8 UC Riverside         Cal State Bakersfield         71      59 UC Riv~ Cal St~
-    ##  9 Mississippi State    Utah                          52      49 Missis~ Utah   
-    ## 10 UCLA                 Colorado                      68      54 UCLA    Colora~
-    ## # ... with abbreviated variable names 1: away_score, 2: win_team, 3: lose_team
+    ##    home_team          away_team            home_score away_score win_t~1 lose_~2
+    ##    <chr>              <chr>                     <dbl>      <dbl> <chr>   <chr>  
+    ##  1 West Virginia      Pennsylvania                 92         58 West V~ Pennsy~
+    ##  2 Stephen F. Austin  New Mexico State             69         60 Stephe~ New Me~
+    ##  3 San Diego State    UC Irvine                    72         69 San Di~ UC Irv~
+    ##  4 Charlotte          Boise State                  54         42 Charlo~ Boise ~
+    ##  5 Northern Iowa      Evansville                   72         55 Northe~ Evansv~
+    ##  6 South Florida      Wichita State                66         70 Wichit~ South ~
+    ##  7 Nebraska           Omaha                        75         61 Nebras~ Omaha  
+    ##  8 Boise State        Cal State Northridge         55         46 Boise ~ Cal St~
+    ##  9 Oregon             Arizona                      87         68 Oregon  Arizona
+    ## 10 Eastern Washington North Dakota State           78         70 Easter~ North ~
+    ## # ... with abbreviated variable names 1: win_team, 2: lose_team
 
 ### getting team records
 
@@ -134,6 +134,7 @@ team_records = team_records |>
   filter(games_played >= 10)
 
 all_teams = team_records$team
+all_teams = all_teams[!all_teams %in% c("Alcorn State", "South Carolina State")]
 rm(team_wins, team_losses)
 
 team_records |>
@@ -379,30 +380,33 @@ rm(home_counts, away_counts)
 
 get_home_off_str = function(team) {
   games = filter(end_expanded, home_team == team)
+  if (nrow(games) == 0) return(0)
   ho_str = round(sum(games$ho_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
   return(ho_str)
 }
 
 get_home_def_str = function(team) {
   games = filter(end_expanded, home_team == team)
+  if (nrow(games) == 0) return(0)
   hd_str = round(sum(games$hd_str) / home_away_counts$home_n[which(home_away_counts$team == team)], 3)
   return(hd_str)
 }
 
 get_away_off_str = function(team) {
   games = filter(end_expanded, away_team == team)
+  if (nrow(games) == 0) return(0)
   ao_str = round(sum(games$ao_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
   return(ao_str)
 }
 
 get_away_def_str = function(team) {
   games = filter(end_expanded, away_team == team)
+  if (nrow(games) == 0) return(0)
   ad_str = round(sum(games$ad_str) / home_away_counts$away_n[which(home_away_counts$team == team)], 3)
   return(ad_str)
 }
 
 home_away_str = data.frame(team = all_teams) |>
-  filter(!team %in% c("Alcorn State", "South Carolina State")) |> # error with these two
   mutate(home_off_str = sapply(team, get_home_off_str),
          home_def_str = sapply(team, get_home_def_str),
          away_off_str = sapply(team, get_away_off_str),
@@ -424,11 +428,11 @@ home_away_str |>
 
 ![](hoopR_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
+### evaluating accuracy of game predictions based entirely on home and away strength ratings
+
 ``` r
 res = end_game |>
-  filter(home_team %in% all_teams & away_team %in% all_teams,
-         !home_team %in% c("Alcorn State", "South Carolina State"),
-         !away_team %in% c("Alcorn State", "South Carolina State")) |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
   left_join(home_away_str, by = c("home_team" = "team")) |>
   select(home_team, away_team, win_team, home_str) |>
   left_join(home_away_str, by = c("away_team" = "team")) |>
@@ -441,7 +445,7 @@ res = end_game |>
 paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 ```
 
-    ## [1] "basic accuracy: 0.767"
+    ## [1] "basic accuracy: 0.766"
 
 *work in progress, still in introductory stage*
 
@@ -451,4 +455,4 @@ paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 tictoc::toc()
 ```
 
-    ## 27.03 sec elapsed
+    ## 26.3 sec elapsed
