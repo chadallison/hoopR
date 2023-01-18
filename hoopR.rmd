@@ -316,6 +316,48 @@ res = end_game |>
 paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 ```
 
+### building first logistic regression model
+
+```{r}
+xxx = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
+  left_join(home_away_str, by = c("home_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str) |>
+  left_join(home_away_str, by = c("away_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str.x, away_str) |>
+  rename(home_str = home_str.x) |>
+  left_join(team_ppg, by = c("home_team" = "team")) |>
+  rename(home_oppg = off_ppg, home_dppg = def_ppg) |>
+  left_join(team_ppg, by = c("away_team" = "team")) |>
+  rename(away_oppg = off_ppg, away_dppg = def_ppg) |>
+  mutate(home_win = ifelse(win_team == home_team, 1, 0))
+
+mod = glm(home_win ~ home_str + away_str + home_oppg + home_dppg + away_oppg + away_dppg,
+          data = xxx, family = "binomial")
+
+probs = predict(mod, xxx, type = "response")
+
+res = xxx |>
+  mutate(prob = probs,
+         pred_hw = ifelse(prob >= 0.5, 1, 0)) |>
+  count(home_win == pred_hw) |>
+  pull(n)
+
+paste0("first model accuracy: ", round(res[2] / sum(res), 3))
+```
+
+this first draft of a predictive model is a logistic regression model with an accuracy of 79.8%. it uses the following variables as predictors.
+
+- `home_str`: home team strength rating
+- `away_str`: away team strength rating
+- `home_oppg`: home team offensive points per game
+- `home_dppg`: home team defensive points per game
+- `away_oppg`: away team offensive points per game
+- `away_dppg`: away team defensive points per game
+
+
+
+
 *work in progress, still in introductory stage*
 
 

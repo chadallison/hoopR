@@ -92,19 +92,19 @@ sample_n(end_game, 10)
 ```
 
     ## # A tibble: 10 x 6
-    ##    home_team          away_team            home_score away_score win_t~1 lose_~2
-    ##    <chr>              <chr>                     <dbl>      <dbl> <chr>   <chr>  
-    ##  1 West Virginia      Pennsylvania                 92         58 West V~ Pennsy~
-    ##  2 Stephen F. Austin  New Mexico State             69         60 Stephe~ New Me~
-    ##  3 San Diego State    UC Irvine                    72         69 San Di~ UC Irv~
-    ##  4 Charlotte          Boise State                  54         42 Charlo~ Boise ~
-    ##  5 Northern Iowa      Evansville                   72         55 Northe~ Evansv~
-    ##  6 South Florida      Wichita State                66         70 Wichit~ South ~
-    ##  7 Nebraska           Omaha                        75         61 Nebras~ Omaha  
-    ##  8 Boise State        Cal State Northridge         55         46 Boise ~ Cal St~
-    ##  9 Oregon             Arizona                      87         68 Oregon  Arizona
-    ## 10 Eastern Washington North Dakota State           78         70 Easter~ North ~
-    ## # ... with abbreviated variable names 1: win_team, 2: lose_team
+    ##    home_team              away_team      home_score away_score win_team  lose_~1
+    ##    <chr>                  <chr>               <dbl>      <dbl> <chr>     <chr>  
+    ##  1 Air Force              Portland               51         64 Portland  Air Fo~
+    ##  2 California Baptist     Utah Tech              72         58 Californ~ Utah T~
+    ##  3 Vanderbilt             Southern Miss          48         60 Southern~ Vander~
+    ##  4 Ole Miss               Tennessee              59         63 Tennessee Ole Mi~
+    ##  5 St. Thomas - Minnesota Troy                   78         76 St. Thom~ Troy   
+    ##  6 Georgia Tech           Northeastern           81         63 Georgia ~ Northe~
+    ##  7 SMU                    Tulsa                  92         67 SMU       Tulsa  
+    ##  8 Bowling Green          Akron                  70         74 Akron     Bowlin~
+    ##  9 Villanova              Oklahoma               70         66 Villanova Oklaho~
+    ## 10 Rice                   Louisiana Tech         82         88 Louisian~ Rice   
+    ## # ... with abbreviated variable name 1: lose_team
 
 ### getting team records
 
@@ -447,6 +447,49 @@ paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 
     ## [1] "basic accuracy: 0.766"
 
+### building first logistic regression model
+
+``` r
+xxx = end_game |>
+  filter(home_team %in% all_teams & away_team %in% all_teams) |>
+  left_join(home_away_str, by = c("home_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str) |>
+  left_join(home_away_str, by = c("away_team" = "team")) |>
+  select(home_team, away_team, win_team, home_str.x, away_str) |>
+  rename(home_str = home_str.x) |>
+  left_join(team_ppg, by = c("home_team" = "team")) |>
+  rename(home_oppg = off_ppg, home_dppg = def_ppg) |>
+  left_join(team_ppg, by = c("away_team" = "team")) |>
+  rename(away_oppg = off_ppg, away_dppg = def_ppg) |>
+  mutate(home_win = ifelse(win_team == home_team, 1, 0))
+
+mod = glm(home_win ~ home_str + away_str + home_oppg + home_dppg + away_oppg + away_dppg,
+          data = xxx, family = "binomial")
+
+probs = predict(mod, xxx, type = "response")
+
+res = xxx |>
+  mutate(prob = probs,
+         pred_hw = ifelse(prob >= 0.5, 1, 0)) |>
+  count(home_win == pred_hw) |>
+  pull(n)
+
+paste0("first model accuracy: ", round(res[2] / sum(res), 3))
+```
+
+    ## [1] "first model accuracy: 0.798"
+
+this first draft of a predictive model is a logistic regression model
+with an accuracy of 79.8%. it uses the following variables as
+predictors.
+
+- `home_str`: home team strength rating
+- `away_str`: away team strength rating
+- `home_oppg`: home team offensive points per game
+- `home_dppg`: home team defensive points per game
+- `away_oppg`: away team offensive points per game
+- `away_dppg`: away team defensive points per game
+
 *work in progress, still in introductory stage*
 
 ### script runtime
@@ -455,4 +498,4 @@ paste0("basic accuracy: ", round(res[2] / sum(res), 3))
 tictoc::toc()
 ```
 
-    ## 26.3 sec elapsed
+    ## 26.38 sec elapsed
